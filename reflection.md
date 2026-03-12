@@ -8,6 +8,11 @@ Answer each question in 3 to 5 sentences. Be specific and honest about what actu
 - List at least two concrete bugs you noticed at the start  
   (for example: "the secret number kept changing" or "the hints were backwards").
 
+Answers:
+- You get a text box saying to put a number between 1 and 100. There are three buttons: Submit guess, New game, and if we want hints or not, which just tell us to go lower or higher.
+- Two concrete bugs:
+  - Putting a number outside the boundaries doesn't produce an error, the hint just tells us to go lower or higher, which doesn't make any sense. I put a number below the boundaries, and it said go lower.
+  - When you get the correct answer and press "New Game", you can't play the new game, it just basically freezes, and I noticed that the attempts go to 0. I was expecting each game to have a number of attempts but it just seems like the attempts are incrementing down for each game, instead of each individual attempt, which should be independent of each game. 
 ---
 
 ## 2. How did you use AI as a teammate?
@@ -16,6 +21,8 @@ Answer each question in 3 to 5 sentences. Be specific and honest about what actu
 - Give one example of an AI suggestion that was correct (including what the AI suggested and how you verified the result).
 - Give one example of an AI suggestion that was incorrect or misleading (including what the AI suggested and how you verified the result).
 
+Answers:
+- The first thing I noticed was that if I put in a number out of range so <1 or >1 with hints on would produce wrong hints and that the buttons would break after playing one game. I also noticed that the attempts thing just looked wrong, it would start at 1 in the debugging section of the streamlit app. Claude suggested to fix the attempts first so that it initalizes to 0 and to fix the out-of-bounds validation, which will show an error as a "hint" if the guess is outside the valid range. Then, I also saw that the score was weird, it felt random. The AI also suggested to check logic_utils.py for parse_guess, which handles None/empty input, decimals, and non-numeric strings, check_guess, which returns the right hint, and update_score, which awards points on win (but decreases by attempts), and penalizes/rewards on high/low guesses. The hints didnt work at 
 ---
 
 ## 3. Debugging and testing your fixes

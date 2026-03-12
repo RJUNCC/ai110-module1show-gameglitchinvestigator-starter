@@ -10,7 +10,10 @@ def get_range_for_difficulty(difficulty: str):
         return 1, 50
     return 1, 100
 
-
+# FIXME: Out of bounds numbers don't produce error
+# FIX: attempts now initalizes to 0 (was 1 before),
+# FIX: "New Game" button now also resets status and History
+# FIX: Added validation, which shows an error if the guess is outside the valid range for the difficulty.
 def parse_guess(raw: str):
     if raw is None:
         return False, None, "Enter a guess."
@@ -93,7 +96,7 @@ if "secret" not in st.session_state:
     st.session_state.secret = random.randint(low, high)
 
 if "attempts" not in st.session_state:
-    st.session_state.attempts = 1
+    st.session_state.attempts = 0
 
 if "score" not in st.session_state:
     st.session_state.score = 0
@@ -134,6 +137,8 @@ with col3:
 if new_game:
     st.session_state.attempts = 0
     st.session_state.secret = random.randint(1, 100)
+    st.session_state.status = "playing"
+    st.session_state.history = []
     st.success("New game started.")
     st.rerun()
 
@@ -152,6 +157,8 @@ if submit:
     if not ok:
         st.session_state.history.append(raw_guess)
         st.error(err)
+    elif guess_int < low or guess_int > high:
+        st.error(f"Please enter a number between {low} and {high}.")
     else:
         st.session_state.history.append(guess_int)
 
