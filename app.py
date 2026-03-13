@@ -1,71 +1,6 @@
 import random
 import streamlit as st
-
-def get_range_for_difficulty(difficulty: str):
-    if difficulty == "Easy":
-        return 1, 20
-    if difficulty == "Normal":
-        return 1, 100
-    if difficulty == "Hard":
-        return 1, 50
-    return 1, 100
-
-# FIXME: Out of bounds numbers don't produce error
-# FIX: attempts now initalizes to 0 (was 1 before),
-# FIX: "New Game" button now also resets status and History
-# FIX: Added validation, which shows an error if the guess is outside the valid range for the difficulty.
-def parse_guess(raw: str):
-    if raw is None:
-        return False, None, "Enter a guess."
-
-    if raw == "":
-        return False, None, "Enter a guess."
-
-    try:
-        if "." in raw:
-            value = int(float(raw))
-        else:
-            value = int(raw)
-    except Exception:
-        return False, None, "That is not a number."
-
-    return True, value, None
-
-
-def check_guess(guess, secret):
-    if guess == secret:
-        return "Win", "🎉 Correct!"
-
-    try:
-        if guess > secret:
-            return "Too High", "📉 Go LOWER!"
-        else:
-            return "Too Low", "📈 Go HIGHER!"
-    except TypeError:
-        g = str(guess)
-        if g == secret:
-            return "Win", "🎉 Correct!"
-        if g > secret:
-            return "Too High", "📈 Go HIGHER!"
-        return "Too Low", "📉 Go LOWER!"
-
-
-def update_score(current_score: int, outcome: str, attempt_number: int):
-    if outcome == "Win":
-        points = 100 - 10 * (attempt_number + 1)
-        if points < 10:
-            points = 10
-        return current_score + points
-
-    if outcome == "Too High":
-        if attempt_number % 2 == 0:
-            return current_score + 5
-        return current_score - 5
-
-    if outcome == "Too Low":
-        return current_score - 5
-
-    return current_score
+from logic_utils import get_range_for_difficulty, parse_guess, check_guess, update_score, get_guess_closeness
 
 st.set_page_config(page_title="Glitchy Guesser", page_icon="🎮")
 
@@ -109,17 +44,16 @@ if "history" not in st.session_state:
 
 st.subheader("Make a guess")
 
-st.info(
-    f"Guess a number between 1 and 100. "
-    f"Attempts left: {attempt_limit - st.session_state.attempts}"
-)
+# Live status metrics
+attempts_used = st.session_state.attempts
+attempts_left = attempt_limit - attempts_used
+m1, m2, m3 = st.columns(3)
+m1.metric("Range", f"{low} – {high}")
+m2.metric("Attempts Left", attempts_left)
+m3.metric("Score", st.session_state.score)
 
-with st.expander("Developer Debug Info"):
-    st.write("Secret:", st.session_state.secret)
-    st.write("Attempts:", st.session_state.attempts)
-    st.write("Score:", st.session_state.score)
-    st.write("Difficulty:", difficulty)
-    st.write("History:", st.session_state.history)
+# Attempts progress bar
+st.progress(attempts_used / attempt_limit if attempt_limit else 0, text="Attempts used")
 
 raw_guess = st.text_input(
     "Enter your guess:",
@@ -134,6 +68,13 @@ with col2:
 with col3:
     show_hint = st.checkbox("Show hint", value=True)
 
+if st.checkbox("Show Developer Debug Info", key="show_debug"):
+    st.write("Secret:", st.session_state.secret)
+    st.write("Attempts:", st.session_state.attempts)
+    st.write("Score:", st.session_state.score)
+    st.write("Difficulty:", difficulty)
+    st.write("History:", st.session_state.history)
+
 if new_game:
     st.session_state.attempts = 0
     st.session_state.secret = random.randint(1, 100)
@@ -142,11 +83,53 @@ if new_game:
     st.success("New game started.")
     st.rerun()
 
+
+def _hot_cold_label(closeness: float) -> str:
+    """Return an emoji hot/cold label for a closeness value in [0, 1]."""
+    if closeness >= 0.90:
+        return "🔥 ON FIRE"
+    if closeness >= 0.70:
+        return "♨️ Hot"
+    if closeness >= 0.45:
+        return "🌡️ Warm"
+    if closeness >= 0.20:
+        return "❄️ Cold"
+    return "🧊 Freezing"
+
+
+def _show_summary_table(history: list, secret: int, low: int, high: int) -> None:
+    """Render a session summary table after the game ends."""
+    st.subheader("📋 Session Summary")
+    rows = []
+    running_score = 0
+    for i, g in enumerate(history, start=1):
+        if not isinstance(g, int):
+            continue
+        outcome, _ = check_guess(g, secret)
+        closeness = get_guess_closeness(g, secret, low, high)
+        delta = update_score(0, outcome, i) - 0
+        running_score += delta
+        direction_emoji = {"Win": "🟢 Win", "Too High": "🔴 Too High", "Too Low": "🔵 Too Low"}.get(outcome, outcome)
+        rows.append({
+            "Attempt": i,
+            "Guess": g,
+            "Result": direction_emoji,
+            "Closeness": f"{closeness * 100:.0f}%",
+            "Temperature": _hot_cold_label(closeness),
+            "Score Δ": f"{delta:+d}",
+        })
+    if rows:
+        st.table(rows)
+
+
 if st.session_state.status != "playing":
+    valid_history = [g for g in st.session_state.history if isinstance(g, int)]
     if st.session_state.status == "won":
         st.success("You already won. Start a new game to play again.")
     else:
         st.error("Game over. Start a new game to try again.")
+    if valid_history:
+        _show_summary_table(valid_history, st.session_state.secret, low, high)
     st.stop()
 
 if submit:
@@ -165,9 +148,16 @@ if submit:
         secret = st.session_state.secret
 
         outcome, message = check_guess(guess_int, secret)
+        closeness = get_guess_closeness(guess_int, secret, low, high)
 
         if show_hint:
-            st.warning(message)
+            if outcome == "Too High":
+                st.error(f"🔴 {message}")
+            elif outcome == "Too Low":
+                st.info(f"🔵 {message}")
+
+            hot_cold = _hot_cold_label(closeness)
+            st.markdown(f"### {hot_cold} &nbsp; `{closeness * 100:.0f}%` close")
 
         st.session_state.score = update_score(
             current_score=st.session_state.score,
@@ -179,17 +169,44 @@ if submit:
             st.balloons()
             st.session_state.status = "won"
             st.success(
-                f"You won! The secret was {st.session_state.secret}. "
-                f"Final score: {st.session_state.score}"
+                f"🎉 You won! The secret was **{st.session_state.secret}**. "
+                f"Final score: **{st.session_state.score}**"
             )
+            valid_history = [g for g in st.session_state.history if isinstance(g, int)]
+            _show_summary_table(valid_history, st.session_state.secret, low, high)
         else:
             if st.session_state.attempts >= attempt_limit:
                 st.session_state.status = "lost"
                 st.error(
-                    f"Out of attempts! "
-                    f"The secret was {st.session_state.secret}. "
-                    f"Score: {st.session_state.score}"
+                    f"💀 Out of attempts! "
+                    f"The secret was **{st.session_state.secret}**. "
+                    f"Score: **{st.session_state.score}**"
                 )
+                valid_history = [g for g in st.session_state.history if isinstance(g, int)]
+                _show_summary_table(valid_history, st.session_state.secret, low, high)
+
+# --- Guess History Sidebar ---
+valid_history = [g for g in st.session_state.get("history", []) if isinstance(g, int)]
+
+if valid_history:
+    st.sidebar.divider()
+    st.sidebar.subheader("Guess History")
+    game_over = st.session_state.get("status", "playing") in ("won", "lost")
+
+    for g in valid_history:
+        outcome, _ = check_guess(g, st.session_state.get("secret", 0))
+        if outcome == "Win":
+            direction = "🟢"
+        elif outcome == "Too High":
+            direction = "🔴"
+        else:
+            direction = "🔵"
+        closeness = get_guess_closeness(g, st.session_state.get("secret", 0), low, high)
+        st.sidebar.write(f"{direction} Guess: {g}")
+        st.sidebar.progress(closeness)
+
+    if game_over:
+        st.sidebar.caption(f"Secret was: {st.session_state.secret}")
 
 st.divider()
 st.caption("Built by an AI that claims this code is production-ready.")

@@ -25,14 +25,48 @@ It wrote the code, ran away, and now the game is unplayable.
 
 ## 📝 Document Your Experience
 
-- [ ] Describe the game's purpose.
-- [ ] Detail which bugs you found.
-- [ ] Explain what fixes you applied.
+- [X] Describe the game's purpose.
+   - To guess the correct number and score the as many points as possible. 
+- [X] Detail which bugs you found.
+   - Attempts wouldn't increment and started a 0
+   - No error/hint handling for numbers out of range or hint were incorrect
+   - Buttons freeze when pressing new game
+   - Different attempts for difficulty
+- [X] Explain what fixes you applied.
+   - Start attempts at 0
+   - Buttons don't freeze anymore, so now I can start new games without restarting the app.
+   - Difficulty has different attempts but I easy should have the most attempts, not normal, which I didn't fix yet.
+   - Shows error when <0 or  >100.  
 
 ## 📸 Demo
 
-- [ ] [Insert a screenshot of your fixed, winning game here]
+![ ](images/image.png)
+![ ](images/challenge_1_tests_passed.png)
+
+Challenge 2:
+- Claude added the get_guess_closeness at the end of logic_utils.py .
+- Updated import and inserted sidebar history block after the attempts caption.
+- Updated import and added 5 new tests for get_guess_closeness
+- The sidebar displays colored emojis where green is win, red is too high, and blue is too low and there's also a progress bar that shows the different between the secret and the current guessed number.
+
+Challenge 3:
+- PEP 8 fixes:                                                       
+   - Removed extra spaces in 1    , 100 (line 6)
+   - Added space after # in #FIX: comments                            
+   - Removed trailing whitespace
+   - Added type annotations to check_guess and parse_guess return     
+   types                                                              
+   - Removed stale dev-note comments (# FIXME, # FIX:)
+
+- Documentation:
+   - Added a module-level docstring explaining the file's purpose and
+   design philosophy
+   - Expanded all docstrings to Google style with Args: and Returns:
+   sections
+   - Documented the scoring rules inline in update_score's docstring
+   - Clarified decimal truncation behavior in parse_guess
+
 
 ## 🚀 Stretch Features
 
-- [ ] [If you choose to complete Challenge 4, insert a screenshot of your Enhanced Game UI here]
+![](images/challenge_4_enhanced_ui.png)

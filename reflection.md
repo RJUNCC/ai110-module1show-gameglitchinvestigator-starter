@@ -22,7 +22,7 @@ Answers:
 - Give one example of an AI suggestion that was incorrect or misleading (including what the AI suggested and how you verified the result).
 
 Answers:
-- The first thing I noticed was that if I put in a number out of range so <1 or >1 with hints on would produce wrong hints and that the buttons would break after playing one game. I also noticed that the attempts thing just looked wrong, it would start at 1 in the debugging section of the streamlit app. Claude suggested to fix the attempts first so that it initalizes to 0 and to fix the out-of-bounds validation, which will show an error as a "hint" if the guess is outside the valid range. Then, I also saw that the score was weird, it felt random. The AI also suggested to check logic_utils.py for parse_guess, which handles None/empty input, decimals, and non-numeric strings, check_guess, which returns the right hint, and update_score, which awards points on win (but decreases by attempts), and penalizes/rewards on high/low guesses. The hints didnt work at 
+- The first thing I noticed was that if I put in a number out of range so <1 or >1 with hints on would produce wrong hints and that the buttons would break after playing one game. I also noticed that the attempts thing just looked wrong, it would start at 1 in the debugging section of the streamlit app. Claude suggested to fix the attempts first so that it initalizes to 0 and to fix the out-of-bounds validation, which will show an error as a "hint" if the guess is outside the valid range. Then, I also saw that the score was weird, it felt random. The AI also suggested to check logic_utils.py for parse_guess, which handles None/empty input, decimals, and non-numeric strings, check_guess, which returns the right hint, and update_score, which awards points on win (but decreases by attempts), and penalizes/rewards on high/low guesses. The hints didnt work at first when I verified them by just testing the streamlit app. Claude decided when secret was higher than guess should be higher and vice versa, so we had to fix that, and we did fix it; it works now. 
 ---
 
 ## 3. Debugging and testing your fixes
@@ -32,6 +32,8 @@ Answers:
   and what it showed you about your code.
 - Did AI help you design or understand any tests? How?
 
+Answers:
+- I tested the streamlit app again with the updated code, and see if it worked the way I wanted to. The manual tests were to test the UI and the pytest were just to check the tests. Claude refactored the pytests a little bit since there were three failing but there were four passing. 
 ---
 
 ## 4. What did you learn about Streamlit and state?
