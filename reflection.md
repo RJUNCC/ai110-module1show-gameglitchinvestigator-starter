@@ -42,6 +42,8 @@ Answers:
 - How would you explain Streamlit "reruns" and session state to a friend who has never used Streamlit?
 - What change did you make that finally gave the game a stable secret number?
 
+Answers:
+- I don't really remember why it kept changing; My guess it that when we hit "Submit Guess", it could've had different logic that randomized the secret number. A streamlit rerun is when the entire Python script runs from top to bottom every time a user interacts with the app. Session state is a feature that allows us to store and persist variables and other data across these reruns for a specific user's session. Session state contains a dictionary-like object (st.session_state) that provides a way to store variables across reruns, which basically allows the app to remember user interactions. The state is always specific to each user and each browser tab. Opening a new tab or refreshing the page will create a new session and reset its state. I asked Claude how we made the secret stable and it was the `secret st.session_state.secret`. The previous code attmepted to convert the secret to a string, so check_guess was comparing an integer guess to a string secret, which doesn't work. Also, the code just looked repetitive and kind of abnormal, it's like the if and else cases were both trying to achieve the same thing.  
 ---
 
 ## 5. Looking ahead: your developer habits
@@ -50,3 +52,6 @@ Answers:
   - This could be a testing habit, a prompting strategy, or a way you used Git.
 - What is one thing you would do differently next time you work with AI on a coding task?
 - In one or two sentences, describe how this project changed the way you think about AI generated code.
+
+Answers:
+- Creating docstrings, pytests, and fixing simple logic are things that I would use because they kind of become a tedious task. I like testing the features and just asking Claude to scope out something that might be related to bugs that I find because it's a lot quicker. It's so easy to have messed up logic and it takes a lot of brain power to discover something that might be so simple. I think I was letting AI do a lot of the coding but I was checking and testing it. I would probably try to use plan mode in Claude, because I just found out that it had plan mode, and try to code that plan and if I'm stuck, I'll ask for hints or for it to guide me step by step. I think AI generated code is good for stuff like this but I always here problems on things related to database/user login features and large-scale projects. So, I think it's good for small projects like this but I'm really wondering how it would work on much bigger and real-world projects. 
